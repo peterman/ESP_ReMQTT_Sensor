@@ -24,7 +24,7 @@ const char * hostName = "esp-async";
 const char* http_username = "admin";
 const char* http_password = "admin";
 
-const long utcOffsetInSeconds = 3600;
+
 char daysOfTheWeek[7][12] = {"Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Sonnabend"};
 
 long ntpTM = 0;
@@ -33,7 +33,7 @@ long ntpTO = 5000;
 
 // Define NTP Client to get time
 WiFiUDP ntpUDP;
-NTPClient timeClient(ntpUDP, "pool.ntp.org", utcOffsetInSeconds);
+NTPClient timeClient(ntpUDP, "europe.pool.ntp.org", 3600, 60000);
 
 
 String processor(const String& var) {
