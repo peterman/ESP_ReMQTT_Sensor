@@ -1,5 +1,3 @@
-
-
 #include <FS.h>
 #include <NTPClient.h>
 #include <ESP8266WiFi.h>
@@ -57,7 +55,7 @@ NTPClient timeClient(ntpUDP, "europe.pool.ntp.org", 3600, 60000);
 void setup(){
   Serial.begin(115200);
   Serial.setDebugOutput(true);
-  
+  SPIFFS.begin();
   // Should load default config if run for the first time
   Serial.println(F("Loading configuration..."));
   loadConfiguration(filename, config);
@@ -77,7 +75,7 @@ void setup(){
 
   MDNS.addService("http","tcp",80);
 
-  SPIFFS.begin();
+  
   
   
   
@@ -115,7 +113,7 @@ void loop(){
     Serial.print(timeClient.getMinutes());
     Serial.print(":");
     Serial.println(timeClient.getSeconds());
-    //Serial.println(timeClient.getFormattedTime());
+    Serial.println(timeClient.getFormattedTime());
   }
   
   

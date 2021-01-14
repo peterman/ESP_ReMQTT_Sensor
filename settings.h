@@ -3,10 +3,11 @@ void saveConfiguration(const char *filename, const Config &config) {
   SPIFFS.remove(filename);
   File file = SPIFFS.open(filename, "w");
   if (!file) {
+    Serial.println("faile to create");
     return;
   }
 
-  StaticJsonDocument<256> doc;
+  StaticJsonDocument<512> doc;
 
   // Set the values in the document
   doc["ssid"]       = config.ssid;
@@ -31,6 +32,7 @@ void loadConfiguration(const char *filename, Config &config) {
   File file; 
   if (!SPIFFS.open(filename, "r" )) {
     saveConfiguration(filename, config);
+    Serial.println("no file");
   }
 
   // Allocate a temporary JsonDocument
