@@ -1,3 +1,5 @@
+
+
 #include <FS.h>
 #include <NTPClient.h>
 #include <ESP8266WiFi.h>
@@ -10,32 +12,39 @@
 #include <SPIFFSEditor.h>
 
 #include <PubSubClient.h>
+#include <ArduinoJson.h>
 
 #include <AsyncElegantOTA.h>
 #include <elegantWebpage.h>
 #include <Hash.h>
 
-#include "webserver.h"
-#include "settings.h"
+
 
 //----------------------------------------------------------------
+struct Config {
+  char ssid[20]       = "MikroTik-220CF6";
+  char wlankey[20]    = "Sanifar123!";
+  char hostName[20]   = "esp-async";
+  char http_user[10]  = "admin";
+  char http_pw[10]    = "admin";
+  char www_user[10]   = "admin";
+  char www_pw[10]     = "admin";
+  int port;
+};
 
+const char *filename = "/settings.json";  // <- SD library uses 8.3 filenames
+Config config;
 // ---------------------------- SKETCH BEGIN ---------------------
 AsyncWebServer server(80);
-
-const char* ssid = "MikroTik-220CF6";
-const char* password = "Sanifar123!";
-const char* hostName = "esp-async";
-const char* http_username = "admin";
-const char* http_password = "admin";
-const char* www_username = "admin";
-const char* www_password = "admin";
 
 char daysOfTheWeek[7][12] = {"Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Sonnabend"};
 
 long ntpTM = 0;
 long ntpTO = 5000;
 
+
+#include "webserver.h"
+#include "settings.h"
 
 // Define NTP Client to get time
 WiFiUDP ntpUDP;
@@ -48,14 +57,19 @@ NTPClient timeClient(ntpUDP, "europe.pool.ntp.org", 3600, 60000);
 void setup(){
   Serial.begin(115200);
   Serial.setDebugOutput(true);
+  
+  // Should load default config if run for the first time
+  Serial.println(F("Loading configuration..."));
+  loadConfiguration(filename, config);
+  
   WiFi.mode(WIFI_AP_STA);
-  WiFi.softAP(hostName);
-  WiFi.begin(ssid, password);
+  WiFi.softAP(config.hostName);
+  WiFi.begin(config.ssid, config.wlankey);
   if (WiFi.waitForConnectResult() != WL_CONNECTED) {
     Serial.printf("STA: Failed!\n");
     WiFi.disconnect(false);
     delay(1000);
-    WiFi.begin(ssid, password);
+    WiFi.begin(config.ssid, config.wlankey);
   }
 
   //Send OTA events to the browser
@@ -67,7 +81,7 @@ void setup(){
   
   
   
-  server.addHandler(new SPIFFSEditor(http_username,http_password));
+  server.addHandler(new SPIFFSEditor(config.http_user,config.http_pw));
   
   server.on("/heap", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send(200, "text/plain", String(ESP.getFreeHeap()));

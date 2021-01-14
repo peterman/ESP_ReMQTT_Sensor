@@ -1,15 +1,37 @@
-struct Config {
-  char hostname[64];
-  int port;
-};
+// Saves the configuration to a file
+void saveConfiguration(const char *filename, const Config &config) {
+  SPIFFS.remove(filename);
+  File file = SPIFFS.open(filename, "w");
+  if (!file) {
+    return;
+  }
 
-const char *filename = "/settings.json";  // <- SD library uses 8.3 filenames
-Config config;
+  StaticJsonDocument<256> doc;
 
-// Loads the configuration from a file
+  // Set the values in the document
+  doc["ssid"]       = config.ssid;
+  doc["wlankey"]    = config.wlankey;
+  doc["hostName"]   = config.hostName;
+  doc["http_user"]  = config.http_user;
+  doc["http_pw"]    = config.http_pw;
+  doc["www_user"]   = config.www_user;
+  doc["www_pw"]     = config.www_pw;
+  doc["port"]       = config.port;
+
+  // Serialize JSON to file
+  if (serializeJson(doc, file) == 0) {
+    Serial.println(F("Failed to write to file"));
+  }
+  // Close the file
+  file.close();
+}
+
+// ---------------- Loads the configuration settingsfile
 void loadConfiguration(const char *filename, Config &config) {
-  // Open file for reading
-  File file = SPIFFS.open(filename);
+  File file; 
+  if (!SPIFFS.open(filename, "r" )) {
+    saveConfiguration(filename, config);
+  }
 
   // Allocate a temporary JsonDocument
   // Don't forget to change the capacity to match your requirements.
@@ -23,41 +45,10 @@ void loadConfiguration(const char *filename, Config &config) {
 
   // Copy values from the JsonDocument to the Config
   config.port = doc["port"] | 2731;
-  strlcpy(config.hostname,                  // <- destination
+  strlcpy(config.hostName,                  // <- destination
           doc["hostname"] | "example.com",  // <- source
-          sizeof(config.hostname));         // <- destination's capacity
+          sizeof(config.hostName));         // <- destination's capacity
 
   // Close the file (Curiously, File's destructor doesn't close the file)
-  file.close();
-}
-
-
-// Saves the configuration to a file
-void saveConfiguration(const char *filename, const Config &config) {
-  // Delete existing file, otherwise the configuration is appended to the file
-  SD.remove(filename);
-
-  // Open file for writing
-  File file = SD.open(filename, FILE_WRITE);
-  if (!file) {
-    Serial.println(F("Failed to create file"));
-    return;
-  }
-
-  // Allocate a temporary JsonDocument
-  // Don't forget to change the capacity to match your requirements.
-  // Use arduinojson.org/assistant to compute the capacity.
-  StaticJsonDocument<256> doc;
-
-  // Set the values in the document
-  doc["hostname"] = config.hostname;
-  doc["port"] = config.port;
-
-  // Serialize JSON to file
-  if (serializeJson(doc, file) == 0) {
-    Serial.println(F("Failed to write to file"));
-  }
-
-  // Close the file
   file.close();
 }
