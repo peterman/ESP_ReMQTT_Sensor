@@ -1,3 +1,4 @@
+#include <FS.h>
 #include <NTPClient.h>
 #include <ESP8266WiFi.h>
 #include <WiFiUdp.h>
@@ -14,16 +15,21 @@
 #include <elegantWebpage.h>
 #include <Hash.h>
 
+#include "webserver.h"
+#include "settings.h"
+
 //----------------------------------------------------------------
-// SKETCH BEGIN
+
+// ---------------------------- SKETCH BEGIN ---------------------
 AsyncWebServer server(80);
 
 const char* ssid = "MikroTik-220CF6";
 const char* password = "Sanifar123!";
-const char * hostName = "esp-async";
+const char* hostName = "esp-async";
 const char* http_username = "admin";
 const char* http_password = "admin";
-
+const char* www_username = "admin";
+const char* www_password = "admin";
 
 char daysOfTheWeek[7][12] = {"Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Sonnabend"};
 
@@ -36,11 +42,7 @@ WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP, "europe.pool.ntp.org", 3600, 60000);
 
 
-String processor(const String& var) {
-      if(var == "HELLO_FROM_TEMPLATE") return String(ESP.getFreeHeap());
-      if(var == "WIFIMODE") return String(WiFi.getMode());
-      return String();
-    }
+
 
     
 void setup(){
@@ -72,6 +74,9 @@ void setup(){
   });
 
   server.serveStatic("/", SPIFFS, "/").setDefaultFile("index.html").setTemplateProcessor(processor);
+  
+  // Serve a file with no cache so every tile It's downloaded
+  server.serveStatic("/settings.json", SPIFFS, "/settings.json", "no-cache, no-store, must-revalidate");
 
   server.onNotFound([](AsyncWebServerRequest *request){
     request->send(404);
